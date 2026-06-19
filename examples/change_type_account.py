@@ -1,5 +1,6 @@
 import asyncio
 
+from pyquotex.config import credentials
 from pyquotex.stable_api import Quotex
 
 
@@ -15,9 +16,12 @@ async def connect_with_retries(client, retries=3):
 
 async def complete_example():
     # Initialization
+    # Credentials come from PYQUOTEX_EMAIL/PYQUOTEX_PASSWORD env vars
+    # or settings/config.ini (never hardcode them in source).
+    email, password = credentials()
     client = Quotex(
-        email="creton.cleiton@gmail.com",
-        password="traderBR2025$",
+        email=email,
+        password=password,
         lang="pt"
     )
     client.set_account_mode("PRACTICE")  # Initialize with REAL or PRACTICE

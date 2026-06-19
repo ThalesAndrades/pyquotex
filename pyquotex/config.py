@@ -1,8 +1,10 @@
 import configparser
 import json
 import os
+import stat
 import sys
 import threading
+from getpass import getpass
 from pathlib import Path
 from typing import Any
 
@@ -21,20 +23,47 @@ session_lock = threading.Lock()
 
 
 def credentials() -> tuple[str, str]:
-    """Get or prompt for user credentials from config file."""
+    """Get user credentials, preferring environment variables.
+
+    Resolution order:
+      1. ``PYQUOTEX_EMAIL`` / ``PYQUOTEX_PASSWORD`` environment variables
+         (recommended for servers/CI — nothing is written to disk).
+      2. ``settings/config.ini`` file (gitignored).
+      3. Interactive prompt, which then writes the file with ``0600``
+         permissions. The password is read without echo via ``getpass``.
+    """
+    env_email = os.environ.get("PYQUOTEX_EMAIL")
+    env_password = os.environ.get("PYQUOTEX_PASSWORD")
+    if env_email and env_password:
+        return env_email, env_password
+    if bool(env_email) ^ bool(env_password):
+        # Fail fast rather than falling through to an interactive prompt that
+        # would stall non-interactive (server/CI) runs.
+        print("Set both PYQUOTEX_EMAIL and PYQUOTEX_PASSWORD, or neither.")
+        sys.exit(1)
+
     if not config_path.exists():
         config_path.parent.mkdir(exist_ok=True, parents=True)
         text_settings = (
             f"[settings]\n"
             f"email={input('Enter your account email: ')}\n"
-            f"password={input('Enter your account password: ')}\n"
+            f"password={getpass('Enter your account password: ')}\n"
         )
-        config_path.write_text(text_settings)
+        config_path.write_text(text_settings, encoding="utf-8")
+        # Restrict to owner read/write so credentials are not world-readable.
+        try:
+            config_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        except OSError as exc:
+            print(
+                f"Warning: could not set restrictive permissions on "
+                f"{config_path}: {exc}",
+                file=sys.stderr,
+            )
 
     config.read(config_path, encoding="utf-8")
 
-    email = config.get("settings", "email")
-    password = config.get("settings", "password")
+    email = config.get("settings", "email", fallback="")
+    password = config.get("settings", "password", fallback="")
 
     if not email or not password:
         print("Email and password cannot be left blank...")

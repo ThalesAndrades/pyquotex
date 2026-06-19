@@ -1,18 +1,31 @@
 import asyncio
 
+from pyquotex.config import credentials
 from pyquotex.stable_api import Quotex
 
 # Your existing imports and initializations here...
 
-# Initialize your Quotex client
-client = Quotex(
-    email="email@gmail.com",
-    password="password",
-    lang="pt",  # Default pt -> Português.
-)
+# The Quotex client is created at runtime (see make_client / __main__) so that
+# credentials are only resolved when the script is actually executed, never at
+# import time.
+client: Quotex | None = None
 cookies = "custom_cookies"
 ssid = "session_id"
 user_agent = "custom_user_agent"
+
+
+def make_client() -> Quotex:
+    """Build the Quotex client, resolving credentials at call time.
+
+    Credentials come from PYQUOTEX_EMAIL/PYQUOTEX_PASSWORD env vars
+    or settings/config.ini (never hardcode them in source).
+    """
+    email, password = credentials()
+    return Quotex(
+        email=email,
+        password=password,
+        lang="pt",  # Default pt -> Português.
+    )
 
 """client.set_session(
     user_agent=user_agent,
@@ -115,6 +128,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    client = make_client()
     loop = asyncio.new_event_loop()
     try:
         loop.run_until_complete(main())
