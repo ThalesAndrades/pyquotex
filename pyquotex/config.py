@@ -36,6 +36,11 @@ def credentials() -> tuple[str, str]:
     env_password = os.environ.get("PYQUOTEX_PASSWORD")
     if env_email and env_password:
         return env_email, env_password
+    if bool(env_email) ^ bool(env_password):
+        # Fail fast rather than falling through to an interactive prompt that
+        # would stall non-interactive (server/CI) runs.
+        print("Set both PYQUOTEX_EMAIL and PYQUOTEX_PASSWORD, or neither.")
+        sys.exit(1)
 
     if not config_path.exists():
         config_path.parent.mkdir(exist_ok=True, parents=True)
@@ -44,12 +49,16 @@ def credentials() -> tuple[str, str]:
             f"email={input('Enter your account email: ')}\n"
             f"password={getpass('Enter your account password: ')}\n"
         )
-        config_path.write_text(text_settings)
+        config_path.write_text(text_settings, encoding="utf-8")
         # Restrict to owner read/write so credentials are not world-readable.
         try:
             config_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
-        except OSError:
-            pass
+        except OSError as exc:
+            print(
+                f"Warning: could not set restrictive permissions on "
+                f"{config_path}: {exc}",
+                file=sys.stderr,
+            )
 
     config.read(config_path, encoding="utf-8")
 

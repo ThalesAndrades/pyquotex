@@ -6,10 +6,6 @@ from rich.panel import Panel
 from pyquotex.config import credentials
 from pyquotex.stable_api import Quotex
 
-# Credentials come from PYQUOTEX_EMAIL/PYQUOTEX_PASSWORD env vars
-# or settings/config.ini (never hardcode them in source).
-email, password = credentials()
-
 console = Console()
 
 
@@ -21,6 +17,9 @@ async def connect_to_quotex():
               width=60))
     await asyncio.sleep(1.5)
 
+    # Credentials are resolved here (runtime), from PYQUOTEX_EMAIL/PYQUOTEX_PASSWORD
+    # env vars or settings/config.ini (never hardcode them in source).
+    email, password = credentials()
     client = Quotex(email=email, password=password)
     connected, reason = await client.connect()
 
