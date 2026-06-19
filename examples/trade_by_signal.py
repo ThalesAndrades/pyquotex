@@ -1,13 +1,17 @@
 import asyncio
 
+from pyquotex.config import credentials
 from pyquotex.stable_api import Quotex
 
 # Your existing imports and initializations here...
 
 # Initialize your Quotex client
+# Credentials come from PYQUOTEX_EMAIL/PYQUOTEX_PASSWORD env vars
+# or settings/config.ini (never hardcode them in source).
+email, password = credentials()
 client = Quotex(
-    email="email@gmail.com",
-    password="password",
+    email=email,
+    password=password,
     lang="pt",  # Default pt -> Português.
 )
 cookies = "custom_cookies"

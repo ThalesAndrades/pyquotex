@@ -3,11 +3,12 @@ import asyncio
 from rich.console import Console
 from rich.panel import Panel
 
+from pyquotex.config import credentials
 from pyquotex.stable_api import Quotex
 
-# Replace with your Quotex login credentials
-email = "email.com"
-password = "password"
+# Credentials come from PYQUOTEX_EMAIL/PYQUOTEX_PASSWORD env vars
+# or settings/config.ini (never hardcode them in source).
+email, password = credentials()
 
 console = Console()
 

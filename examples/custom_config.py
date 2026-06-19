@@ -3,6 +3,7 @@
 import asyncio
 import logging
 
+from pyquotex.config import credentials
 from pyquotex.stable_api import Quotex
 
 logging.basicConfig(
@@ -12,9 +13,9 @@ logging.basicConfig(
 
 USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0"
 
-email = "account@gmail.com"
-password = "you_password"
-email_pass = "gmail_app_key"
+# Credentials come from PYQUOTEX_EMAIL/PYQUOTEX_PASSWORD env vars
+# or settings/config.ini (never hardcode them in source).
+email, password = credentials()
 
 
 client = Quotex(
